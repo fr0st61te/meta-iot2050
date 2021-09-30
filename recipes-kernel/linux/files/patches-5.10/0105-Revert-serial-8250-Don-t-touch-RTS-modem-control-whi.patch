@@ -1,0 +1,40 @@
+From e06df8589379370384082c8cb0008b772c67eeb6 Mon Sep 17 00:00:00 2001
+From: Su Bao Cheng <baocheng.su@siemens.com>
+Date: Thu, 30 Sep 2021 13:15:31 +0800
+Subject: [PATCH] Revert "serial: 8250: Don't touch RTS modem control while in
+ rs485 mode"
+
+This reverts commit f45709df7731ad36306a28a3e1af7309d55c35f5.
+
+The `serial8250_do_set_mctrl` not only used by userspace but also the
+kernel itself.
+
+During tty_open, the omap8250_restore_regs first manipulates some
+registers then use the set_mctrl to restore the MCR register.
+
+Signed-off-by: Su Bao Cheng <baocheng.su@siemens.com>
+---
+ drivers/tty/serial/8250/8250_port.c | 7 -------
+ 1 file changed, 7 deletions(-)
+
+diff --git a/drivers/tty/serial/8250/8250_port.c b/drivers/tty/serial/8250/8250_port.c
+index 3de0a16e055a..37e859da7d60 100644
+--- a/drivers/tty/serial/8250/8250_port.c
++++ b/drivers/tty/serial/8250/8250_port.c
+@@ -2028,13 +2028,6 @@ void serial8250_do_set_mctrl(struct uart_port *port, unsigned int mctrl)
+ 	struct uart_8250_port *up = up_to_u8250p(port);
+ 	unsigned char mcr;
+ 
+-	if (port->rs485.flags & SER_RS485_ENABLED) {
+-		if (serial8250_in_MCR(up) & UART_MCR_RTS)
+-			mctrl |= TIOCM_RTS;
+-		else
+-			mctrl &= ~TIOCM_RTS;
+-	}
+-
+ 	mcr = serial8250_TIOCM_to_MCR(mctrl);
+ 
+ 	mcr = (mcr & up->mcr_mask) | up->mcr_force | up->mcr;
+-- 
+2.25.1
+
