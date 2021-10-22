@@ -1,0 +1,82 @@
+mainmenu "IOT2050 Image Configuration"
+
+config KAS_BUILD_SYSTEM
+	string
+	default "isar"
+
+choice
+	prompt "Image type"
+	default IMAGE_EXAMPLE
+
+config IMAGE_EXAMPLE
+	bool "Example image"
+	help
+	  This is the official example image with several tools as well as
+	  Node-RED preinstalled. It comes without a graphical user interface.
+
+config IMAGE_LXDE
+	bool "LXDE example image"
+	help
+	  Based on the example image, this adds an LXDE-based graphical user
+	  interface.
+
+config IMAGE_BOOT
+	bool "Firmware image"
+	help
+	  Build the firmware image that is responsible for booting the device.
+
+	  WARNING: Do not flash this image onto your device unless you know
+	  that it fits AND you have an external flash programmer at hand that
+	  allows to recover. Otherwise you risk to BRICK THE IOT2050!
+
+endchoice
+
+config KAS_INCLUDE_MAIN
+	string
+	default "kas-iot2050-example.yml" if IMAGE_EXAMPLE
+	default "kas-iot2050-lxde.yml" if IMAGE_LXDE
+	default "kas-iot2050-boot.yml" if IMAGE_BOOT
+
+if IMAGE_EXAMPLE || IMAGE_LXDE
+
+comment "Image features"
+
+config PREEMPT_RT
+	bool "Preempt-RT kernel"
+	help
+	  Build the image with a Preempt-RT kernel, rather than the default
+	  non-preemptive one. This can help achieving better real-time
+	  latencies with the device.
+
+config KAS_INCLUDE_RT
+	string
+	default "kas/opt/preempt-rt.yml"
+	depends on PREEMPT_RT
+
+comment "Build options"
+
+config SDK
+	bool "Build SDK"
+	help
+	  Generate an SDK consisting of a cross-compiler and library headers
+	  needed to build applications for the device.
+
+	  Note: This will not generate the image for the device itself.
+
+config KAS_INCLUDE_SDK
+	string
+	default "kas/opt/sdk.yml"
+	depends on SDK
+
+config PACKAGE_LOCK
+	bool "Use Debian packages from release"
+	help
+	  Use the same Debian packages that were selected for building the
+	  released image or firmware version.
+
+config KAS_INCLUDE_PACKAGE_LOCK
+	string
+	default "kas/opt/package-lock.yml"
+	depends on PACKAGE_LOCK
+
+endif
